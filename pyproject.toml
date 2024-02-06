@@ -1,0 +1,39 @@
+[build-system]
+requires=["setuptools"]
+build-backend="setuptools.build_meta"
+
+[project]
+name="alarm-clock"
+version="0.0.0"
+dependencies=[
+    "python-crontab",
+    "fastapi"
+]
+requires-python=">=3.9.5"
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "isort",
+    "black",
+    "pre-commit",
+    "pyright",
+]
+test = [
+    "pytest",
+]
+
+[tool.pyright]
+exclude=["tests/*"]
+venv=".venv"
+venvPath="."
+
+[tool.isort]
+profile="black"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "E704"]
+
+[tool.black]
+line-length = 88
