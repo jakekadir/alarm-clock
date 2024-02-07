@@ -9,3 +9,6 @@ i: initial-setup
 
 clean:
 	rm -rf .venv
+
+run:
+	uvicorn alarm_clock.main:app --reload
