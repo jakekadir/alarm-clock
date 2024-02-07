@@ -1,5 +1,7 @@
+import re
 import sys
 from pathlib import Path
+from uuid import UUID, uuid4
 
 from crontab import CronItem, CronSlices, CronTab
 
@@ -7,6 +9,9 @@ RING_PATH = str((Path(__name__).parent / "ring.py").resolve())
 COMMAND = f"{sys.executable} {RING_PATH}"
 CRON_TAB = "alarm_clock"
 COMMAND_NAME = "alarm_clock_"
+JOB_REGEX = re.compile(COMMAND_NAME + "([a-f0-9-]+)")
+
+Schedule = tuple[str, str, str, str, str]
 
 
 class Cron:
@@ -16,23 +21,27 @@ class Cron:
     def _get_crontab(self) -> CronTab:
         return CronTab(user=True)
 
-    def validate_cron(self, cron_schedule: str) -> None:
+    def validate_cron(self, cron_schedule: Schedule) -> None:
         if not CronSlices.is_valid(cron_schedule):
             raise ValueError("invalid cron value")
 
-    def get_cron_name(self, id: int) -> str:
+    def get_cron_name(self, id: UUID) -> str:
         return COMMAND_NAME + str(id)
 
-    def create_cron(self, id: int, cron_schedule: str):
+    def get_all(self) -> tuple[CronItem, ...]:
+        return tuple(job for job in self.crontab.find_comment(JOB_REGEX))
+
+    def create(self, cron_schedule: Schedule):
         self.validate_cron(cron_schedule)
 
+        id = uuid4()
         with self.crontab as cron:
             cron_job = cron.new(command=COMMAND, comment=self.get_cron_name(id))
             cron_job.setall(cron_schedule)
 
             return cron_job
 
-    def get_cron(self, id: int) -> CronItem:
+    def get(self, id: UUID) -> CronItem:
         cron_name = self.get_cron_name(id)
         jobs = tuple(job for job in self.crontab.find_comment(cron_name))
 
@@ -41,12 +50,18 @@ class Cron:
 
         return jobs[0]
 
-    def set_cron(self, id: int, cron_schedule: str):
+    def set(self, id: UUID, cron_schedule: Schedule):
         self.validate_cron(cron_schedule)
 
         with self.crontab:
-            cron_job = self.get_cron(id)
+            cron_job = self.get(id)
             cron_job.clear()
             cron_job.setall(cron_schedule)
 
             return cron_job
+
+    def delete(self, id: UUID):
+        with self.crontab:
+            cron_job = self.get(id)
+            self.crontab.remove(cron_job)
+        return cron_job
