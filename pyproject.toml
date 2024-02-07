@@ -27,6 +27,7 @@ test = [
 exclude=["tests/*"]
 venv=".venv"
 venvPath="."
+typeCheckingMode="standard"
 
 [tool.isort]
 profile="black"
