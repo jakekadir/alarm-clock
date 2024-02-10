@@ -6,14 +6,6 @@ const DEFAULT_ALARM={
   enabled: true,
 }
 
-function AlarmObj(id, schedule, enabled){
-  return {
-    id: id, 
-    schedule: schedule,
-    enabled: enabled
-  }
-}
-
 async function sendRequest(route, method, body, setData){
   try {
     const response = await fetch(BACKEND_URL+route, {
@@ -26,25 +18,24 @@ async function sendRequest(route, method, body, setData){
     if(response.status === 200){
       const result = await response.json();
       setData(result);
+      return response.status;
     }
     else{
       console.error("Error fetching data:", response);
+      return response.status;
     }
   } catch (error) {
     console.error('Error fetching data:', error);
+    return -1;
   }
 };
 
 async function updateAlarm(alarm, setState){
-  await sendRequest("cron", "PUT", alarm, setState)
-}
-
-function EnableAlarm(props){
-  return (
-    <form>
-      <input type="checkbox" defaultChecked={props.enabled} onChange={props.onChange}/>
-    </form>
-  )
+  let resp_code = await sendRequest("cron", "PUT", alarm, setState);
+  console.log("RESPONSE CODE", resp_code)
+  if(resp_code !== 200){
+    await sendRequest("cron?id="+alarm.id, "GET", null, setState);
+  }
 }
 
 function CreateAlarm(props){
@@ -59,21 +50,90 @@ function CreateAlarm(props){
   )
 }
 
-function Alarm(props){
-  // const [enabled, setEnabled] = useState(props.enabled);
-  const [state, setState] = useState(props.alarm)
-  async function enabledChange(){
-    // change enabled state of alarm
-    updateAlarm({
-      id: state.id,
-      enabled: !state.enabled
-    }, setState);
+function EditingControls(props){
+
+  function cancelEditing(){
+    props.setEditingMode(false);
   }
+  function submitEdit(){
+    props.setEditingMode(false);
+    props.submitChanges()
+  }
+
   return (
-    <div className="Alarm" key={"alarm" + props.id}>
+    <div>
+      <button key={"cancel-edit_"+props.state.id} type="button" onClick={cancelEditing}>Cancel Editing</button>
+      <button key={"submit-edit_"+props.state.id} type="button" onClick={submitEdit}>Submit changes</button>
+    </div>
+  )
+}
+
+function Schedule(props){
+  if(!props.editingMode){
+    return (
+      <p>{props.schedule.join(" ")}</p>
+    )
+  }
+  else{
+    function updateSchedule(e, index){
+      // copy props schedule
+      let schedule = [...props.schedule];
+      // update with new value
+      schedule[index] = e.target.value;
+      // set in parent
+      props.setSchedule(schedule);
+    }
+    return (
+      <form>
+        {props.schedule.map((sched, index) => {
+          const onChange = (e, index) => updateSchedule(e);
+          return <input key={index} type="text" defaultValue={sched} onChange={(e) => updateSchedule(e, index)}></input>;
+        })}
+      </form>
+    )
+  }
+}
+    // change enabled state of alarm
+
+function Alarm(props){
+  const [state, setState] = useState(props.alarm)
+  const [editingMode, setEditingMode] = useState(false);
+  async function setSchedule(schedule){
+    setState({
+      ...state,
+      schedule: schedule
+    })
+  }
+  async function enabledChange(){
+    setState({
+      ...state,
+      enabled: !state.enabled
+    });
+  }
+  async function submitChanges(){
+    updateAlarm(state, setState);
+  }
+  function editingChange(){
+    setEditingMode(!editingMode);
+  }
+
+  function submitEdit(){
+    console.log("editing finished, need to update state:", state);
+  }
+
+  const editButton = <input key={"edit_"+state.id}type="checkbox" defaultChecked={editingMode} onChange={editingChange}/>
+  const editControls = <EditingControls state={state} setEditingMode={setEditingMode} submitChanges={submitChanges}/>
+  return (
+    <div className="Alarm" key={"alarm_" + props.id}>
       <p>id: {state.id}</p>
-      <p>schedule: {state.schedule.join(" ")}</p>
-      <EnableAlarm id={state.id} enabled={state.enabled} onChange={enabledChange}/>
+      <Schedule schedule={state.schedule} editingMode={editingMode} setSchedule={setSchedule}/>
+      <p>is enabled: {state.enabled.toString()}</p>
+      <form>
+        {/* enable/disable alarm */}
+        {editingMode? <input type="checkbox" defaultChecked={state.enabled} onChange={enabledChange}/> : null}
+        {editingMode? editControls : editButton}
+        <p>IN EDITING MODE: {editingMode.toString()}</p>
+      </form>
     </div>
   )
 }

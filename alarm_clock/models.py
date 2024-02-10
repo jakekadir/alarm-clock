@@ -23,12 +23,17 @@ class CronJob(BaseModel):
         return data
 
 
+def validate_schedule():
+    # use simple regex to validate the characters in the schedule
+    ...
+
+
 class CreateCronJob(BaseModel):
-    schedule: Schedule
+    schedule: Schedule  # needs validation on the schedule items
     enabled: bool
 
 
 class UpdateCronJob(BaseModel):
     id: str
-    schedule: Optional[Schedule] = None
+    schedule: Optional[Schedule] = None  # needs validation of schedule items
     enabled: Optional[bool] = None
