@@ -10,5 +10,8 @@ i: initial-setup
 clean:
 	rm -rf .venv
 
-run:
+b-run:
 	uvicorn alarm_clock.main:app --reload
+
+f-run:
+	cd alarm_clock_frontend && npm run start

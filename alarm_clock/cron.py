@@ -60,6 +60,18 @@ class Cron:
 
             return cron_job
 
+    def enable(self, id: UUID):
+        with self.crontab:
+            job = self.get(id)
+            job.enable(enabled=True)
+            return job
+
+    def disable(self, id: UUID):
+        with self.crontab:
+            job = self.get(id)
+            job.enable(enabled=False)
+            return job
+
     def delete(self, id: UUID):
         with self.crontab:
             cron_job = self.get(id)
