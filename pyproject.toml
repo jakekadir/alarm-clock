@@ -13,16 +13,17 @@ requires-python=">=3.9.5"
 
 [project.optional-dependencies]
 dev = [
-    "flake8",
-    "isort",
-    "black",
     "pre-commit",
     "pyright",
-    "uvicorn[standard]"
+    "uvicorn[standard]",
+    "ruff"
 ]
 test = [
     "pytest",
 ]
+
+[tool.setuptools.packages.find]
+where=["alarm_clock"]
 
 [tool.pyright]
 exclude=["tests/*"]
@@ -30,12 +31,10 @@ venv=".venv"
 venvPath="."
 typeCheckingMode="standard"
 
-[tool.isort]
-profile="black"
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "E704"]
-
-[tool.black]
+[tool.ruff]
 line-length = 88
+src=["alarm_clock"]
+
+[tool.ruff.lint]
+# Add the `line-too-long` rule to the enforced rule set.
+extend-select = ["E501"]
