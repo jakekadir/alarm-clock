@@ -23,7 +23,12 @@ class CronJob(BaseModel):
         return data
 
 
+class CreateCronJob(BaseModel):
+    schedule: Schedule
+    enabled: bool
+
+
 class UpdateCronJob(BaseModel):
     id: str
     schedule: Optional[Schedule] = None
-    enable: Optional[bool] = None
+    enabled: Optional[bool] = None

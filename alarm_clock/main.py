@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from alarm_clock.cron import Cron
-from alarm_clock.models import CronJob, Schedule, UpdateCronJob
+from alarm_clock.models import CronJob, UpdateCronJob, CreateCronJob
 
 app = FastAPI()
 
@@ -46,9 +46,11 @@ async def get_all_cron() -> list[CronJob]:
 
 
 @app.post("/cron")
-async def create_cron(schedule: Schedule) -> CronJob:
-    cronjob = cron.create(schedule)
-    return CronJob.model_validate(cronjob)
+async def create_cron(cron_job_create: CreateCronJob) -> CronJob:
+    cron_job_id = cron.create(cron_job_create.schedule)
+    if not cron_job_create.enabled:
+        cron.disable(cron_job_id)
+    return CronJob.model_validate(cron.get(cron_job_id))
 
 
 @app.put("/cron")
@@ -57,7 +59,7 @@ async def edit_cron(cron_job_update: UpdateCronJob) -> CronJob:
     cron_job = cron.get(uuid_id)
     if cron_job_update.schedule:
         cron_job = cron.set(uuid_id, cron_job_update.schedule)
-    match cron_job_update.enable:
+    match cron_job_update.enabled:
         case True:
             cron_job = cron.enable(uuid_id)
         case False:

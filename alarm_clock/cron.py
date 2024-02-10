@@ -39,7 +39,7 @@ class Cron:
             cron_job = cron.new(command=COMMAND, comment=self.get_cron_name(id))
             cron_job.setall(cron_schedule)
 
-            return cron_job
+            return id
 
     def get(self, id: UUID) -> CronItem:
         cron_name = self.get_cron_name(id)
